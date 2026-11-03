@@ -1,0 +1,11 @@
+{
+  "id": "advisor",
+  "label": "Advisor",
+  "version": "1.0.0",
+  "nav_order": 50,
+  "default_enabled": true,
+  "api_module": "api_advisor",
+  "section": "advisor",
+  "requires": [],
+  "settings_schema": {}
+}

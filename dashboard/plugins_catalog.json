@@ -1,0 +1,215 @@
+{
+  "schema_version": 1,
+  "note": "自制插件目录（M5a）。设置界面的插件清单 = catalog ∪ enabled ∪ disabled ∪ entries，所以本 agent 名单里没有的自制插件也能被看见、被启用。加插件只改本文件，不改代码。version 不在此写死——运行时从 plugins/<id>/plugin.yaml 的 version: 读，响应里标 version_source=\"plugin.yaml\"。",
+  "module_ref_note": "module 字段是「管这个插件的控制台模块」的限定 ref = <console 插件 id>/<模块 id>；module_id 是 /agents/{id}/modules 与 /modules 里用的裸模块 id。两套命名空间裸 id 可能同名（advisor 插件 vs advisor 模块），前端做 key 请用 ref / module_ref。",
+  "selection_rule": "纳入：plugin.yaml 的 author 属于 小白 / xiaobai / wangtj / local / Hermes Agent / 无 author，或老板点名（advisor、hermes-auto-titler）。排除：第三方插件。",
+  "plugins": {
+    "advisor": {
+      "display_name": "Advisor",
+      "kind": "plugin",
+      "source": "self-developed",
+      "note": "老板点名纳入。原生插件：每轮 turn 后跑二次模型评审（provides_hooks: post_llm_call / on_session_finalize）。audit 台账由 plugins/advisor/audit.py 落盘，控制台 advisor 模块读它做审核台。",
+      "module": "hermes-console/advisor",
+      "module_id": "advisor",
+      "has_dashboard_module": true,
+      "settings_editable": true
+    },
+    "hermes-auto-titler": {
+      "display_name": "自动对话命名",
+      "kind": "plugin",
+      "source": "self-developed",
+      "note": "老板点名纳入。原生插件：会话标题多轮跟踪（provides_hooks: pre_llm_call / on_session_end / on_session_finalize）。无控制台面板，但 config_schema 有 23 个可写项（开关 / 触发时机 / 用哪个模型），在「设置」页搜「命名」即可打开并改值。",
+      "aliases": ["自动对话命名", "自动命名", "对话命名", "命名", "标题", "Hermes Auto Titler", "auto titler", "autotitler", "titler", "hermes-auto-titler"],
+      "module": null,
+      "module_id": null,
+      "has_dashboard_module": false,
+      "settings_editable": true
+    },
+    "hermes-auto-group": {
+      "display_name": "Hermes Auto Group",
+      "kind": "plugin",
+      "source": "self-developed",
+      "note": "小白 (xiaobai)。AI 会话自动分组：优先归入已有项目，收不进去才新建（provides_tools: auto_group）。控制台 autogroup 模块是它的面板。",
+      "module": "hermes-console/autogroup",
+      "module_id": "autogroup",
+      "has_dashboard_module": true,
+      "settings_editable": true
+    },
+    "hermes-remote": {
+      "display_name": "Hermes Remote",
+      "kind": "plugin",
+      "source": "self-developed",
+      "note": "小白。对外可连的 hermes serve 后端控制台：桌面半面板看状态、一键启停；Python 半只做 status/start/stop。",
+      "module": null,
+      "module_id": null,
+      "has_dashboard_module": false,
+      "settings_editable": true
+    },
+    "quick-send": {
+      "display_name": "Quick Send",
+      "kind": "plugin",
+      "source": "self-developed",
+      "note": "小白 (xiaobai)。「专线」：文件/视频/文本经 Quicker 微信秒传投递给老板主号，目标固定（provides_tools: quick_send）。",
+      "module": null,
+      "module_id": null,
+      "has_dashboard_module": false,
+      "settings_editable": true
+    },
+    "cua-ops": {
+      "display_name": "CUA Ops",
+      "kind": "plugin",
+      "source": "self-developed",
+      "note": "小白 (xiaobai)。桌面操作工具：在自带 cua-driver 之上升级出窗口解析、递送自动降级/升级、动作后 AX 校验三层能力（provides_tools: cua_ops）。",
+      "module": null,
+      "module_id": null,
+      "has_dashboard_module": false,
+      "settings_editable": true
+    },
+    "model-switch": {
+      "display_name": "Model Switch",
+      "kind": "plugin",
+      "source": "self-developed",
+      "note": "Hermes Agent。查看并统一修改各 profile 的模型与提供商：可操作面板 + 写前快照、写后逐键核验、一键回滚；只读 .env 变量名集合，绝不读密钥值。",
+      "module": null,
+      "module_id": null,
+      "has_dashboard_module": false,
+      "settings_editable": true
+    },
+    "file-policy": {
+      "display_name": "File Policy",
+      "kind": "plugin",
+      "source": "self-developed",
+      "note": "Hermes Agent。只读的文件存放与命名策略解析器（NOTE / TOOL / 项目 / 临时 / 报销）。",
+      "module": null,
+      "module_id": null,
+      "has_dashboard_module": false,
+      "settings_editable": true
+    },
+    "xiaomo-media-delivery-guard": {
+      "display_name": "Xiaomo Media Delivery Guard",
+      "kind": "plugin",
+      "source": "self-developed",
+      "note": "local。Weixin 平台覆盖层（升级安全）：在适配器边界规范化 MEDIA 附件抽取，并遵守 kanban.artifact_delivery=false。",
+      "module": null,
+      "module_id": null,
+      "has_dashboard_module": false,
+      "settings_editable": true
+    },
+    "douyin": {
+      "display_name": "Douyin",
+      "kind": "plugin",
+      "source": "self-developed",
+      "note": "wangtj。抖音视频下载原生工具：Edge 拦截 detail API，子进程下载无水印视频并返回本地绝对路径（provides_tools: douyin_download_video）。",
+      "module": null,
+      "module_id": null,
+      "has_dashboard_module": false,
+      "settings_editable": true
+    },
+    "pmail": {
+      "display_name": "Pmail",
+      "kind": "plugin",
+      "source": "self-developed",
+      "note": "wangtj。自建 outlookEmail(pmail) 原生工具：账号池 / 邮件列表 / 详情+附件 / 附件下载（provides_tools: pmail_accounts）。",
+      "module": null,
+      "module_id": null,
+      "has_dashboard_module": false,
+      "settings_editable": true
+    },
+    "weather": {
+      "display_name": "Weather",
+      "kind": "plugin",
+      "source": "self-developed",
+      "note": "wangtj。多源天气查询工具（彩云 / QWeather / Open-Meteo 兜底）：now / daily / hourly / N 小时后 / summary（provides_tools: weather_summary）。控制台 weather 模块是它的面板。",
+      "module": "hermes-console/weather",
+      "module_id": "weather",
+      "has_dashboard_module": true,
+      "settings_editable": true
+    },
+    "hermes-vcc-cn": {
+      "display_name": "Hermes VCC CN",
+      "kind": "plugin",
+      "source": "self-developed",
+      "note": "plugin.yaml 无 author 字段（按判定规则纳入）。中文上下文引擎（apm-worker 的 context.engine 就是它）。",
+      "module": null,
+      "module_id": null,
+      "has_dashboard_module": false,
+      "settings_editable": true
+    },
+    "apm-worktime": {
+      "display_name": "APM 工时",
+      "kind": "plugin",
+      "source": "self-developed",
+      "note": "Hermes Agent。受控长陆 APM 工时工具：查询项目/工时、建项目、保存草稿、改草稿明细、确认后提交（provides_tools: apm_query / apm_create_project / apm_save_draft / apm_edit_detail / apm_submit_draft）。profile 专属（apm-worker / xiaomo），无控制台面板。",
+      "module": null,
+      "module_id": null,
+      "has_dashboard_module": false,
+      "settings_editable": false
+    },
+    "everything-search": {
+      "display_name": "Everything 搜索",
+      "kind": "plugin",
+      "source": "self-developed",
+      "note": "wangtj。本机 Everything 只读文件搜索：经官方 ES CLI/IPC 查询文件与文件夹（provides_tools: everything_search）。profile 专属（work），无控制台面板。",
+      "module": null,
+      "module_id": null,
+      "has_dashboard_module": false,
+      "settings_editable": false
+    },
+    "meme-library": {
+      "display_name": "表情库",
+      "kind": "plugin",
+      "source": "self-developed",
+      "note": "wangtj。表情包库原生工具：动态检索、随机选图、校验、入库、标签维护（provides_tools: meme_search / meme_random / meme_stats / meme_validate / meme_add / meme_update_tags）。profile 专属（xiaomo），无控制台面板。",
+      "module": null,
+      "module_id": null,
+      "has_dashboard_module": false,
+      "settings_editable": false
+    },
+    "microsoft-todo": {
+      "display_name": "Microsoft To Do",
+      "kind": "plugin",
+      "source": "self-developed",
+      "note": "wangtj。Microsoft To Do 原生工具（Graph API）：列清单 / 读任务 / 新增 / 完成 / 搜索，读 profile .env 的 MSGRAPH_REFRESH_TOKEN（provides_tools: todo_lists / todo_list_tasks / todo_add_task / todo_complete_task / todo_search_tasks）。profile 专属（work / xiaomo），无控制台面板。",
+      "module": null,
+      "module_id": null,
+      "has_dashboard_module": false,
+      "settings_editable": false
+    },
+    "xiaomo-file-guard": {
+      "display_name": "Xiaomo File Guard",
+      "kind": "plugin",
+      "source": "self-developed",
+      "note": "wangtj。小墨写保护护栏（provides_hooks: pre_tool_call）：拦住小墨对生产交付物（NOTE / OneDrive 业务目录）的整文件覆盖与大段 patch，要求走看板派活。profile 专属（xiaomo），无控制台面板。",
+      "module": null,
+      "module_id": null,
+      "has_dashboard_module": false,
+      "settings_editable": false
+    },
+    "xiaomo-vitality": {
+      "display_name": "Xiaomo Vitality",
+      "kind": "plugin",
+      "source": "self-developed",
+      "note": "wangtj。小墨活人感状态引擎：情绪感知 / 情感债 / 专注粘滞 / 时间状态，经 pre_llm_call 注入、post_llm_call 落盘（provides_hooks: pre_llm_call / post_llm_call）。profile 专属（xiaomo），无控制台面板。",
+      "module": null,
+      "module_id": null,
+      "has_dashboard_module": false,
+      "settings_editable": false
+    },
+    "xiaomo-vitality-observer": {
+      "display_name": "Xiaomo Vitality Observer",
+      "kind": "plugin",
+      "source": "self-developed",
+      "note": "xiaobai。小墨活人感只读观测器（provides_hooks: pre_llm_call / post_llm_call）：记录调用与 vitality.json 指纹，验证注入是否生效，不写状态。profile 专属（xiaomo），无控制台面板。",
+      "module": null,
+      "module_id": null,
+      "has_dashboard_module": false,
+      "settings_editable": false
+    }
+  },
+  "excluded": {
+    "browserpaw": "第三方（author: GoldenLoaf24h）",
+    "hades-coding-workflows": "第三方（author: Gurpreet Singh）",
+    "hermes-switchyard": "第三方（author: bgrablin）",
+    "plan-mode": "第三方（author: 100yenadmin）"
+  }
+}

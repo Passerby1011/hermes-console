@@ -1,0 +1,11 @@
+{
+  "id": "vcc",
+  "label": "上下文引擎",
+  "version": "1.0.0",
+  "nav_order": 80,
+  "default_enabled": true,
+  "api_module": "api_vcc",
+  "section": "vcc",
+  "requires": [],
+  "settings_schema": {}
+}

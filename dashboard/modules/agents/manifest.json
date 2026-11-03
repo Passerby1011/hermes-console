@@ -1,0 +1,11 @@
+{
+  "id": "agents",
+  "label": "Agent 总览",
+  "version": "1.0.0",
+  "nav_order": 30,
+  "default_enabled": true,
+  "api_module": "api_agents",
+  "section": "agents",
+  "requires": [],
+  "settings_schema": {}
+}

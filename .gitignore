@@ -1,0 +1,44 @@
+# ── 构建产物：由 scripts/build.mjs 生成，禁止手改
+#    src/main.js ──esbuild──▶ dashboard/dist/index.js ──逐字节镜像──▶ desktop/plugin.js
+#    复现：node plugins/hermes-console/scripts/build.mjs（esbuild 输出无时间戳，同输入同字节）
+#    验收纪律：产物身份 = 「源码 commit + 一次确定性构建」，不再用写死的哈希当基线。
+dashboard/dist/
+desktop/plugin.js
+
+# ── 运行时数据与本地状态（不是源码）
+data/
+_sandbox/
+
+# ── 探针/验收证据（属看板任务产物，已在 kanban attachments 留档，不入库）
+scripts/_probe_out/
+scripts/.probe_out*
+probe_*.json
+AUTOGROUP-AUDIT-*.md
+dashboard/_deleted_*/
+
+# ── Python 缓存
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+
+# ── 依赖与日志
+node_modules/
+*.log
+
+# ── 凭据与本地配置（若将来出现，一律不入库）
+.env
+.env.*
+*.key
+*.pem
+*.p12
+*.pfx
+auth.json
+**/auth.json
+state.json
+**/state.json
+
+# ── Hermes 本地状态
+.hermes/

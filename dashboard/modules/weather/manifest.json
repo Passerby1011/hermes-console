@@ -1,0 +1,17 @@
+{
+  "id": "weather",
+  "label": "天气",
+  "version": "1.0.0",
+  "nav_order": 20,
+  "default_enabled": true,
+  "api_module": "api_weather",
+  "section": "weather",
+  "requires": [],
+  "settings_schema": {
+    "enabled": {
+      "type": "boolean",
+      "default": true,
+      "label": "在导航里显示"
+    }
+  }
+}

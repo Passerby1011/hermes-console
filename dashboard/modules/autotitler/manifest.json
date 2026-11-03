@@ -1,0 +1,17 @@
+{
+  "id": "autotitler",
+  "label": "自动命名",
+  "version": "1.0.0",
+  "nav_order": 45,
+  "default_enabled": true,
+  "api_module": "api_autotitler",
+  "section": "autotitler",
+  "requires": [],
+  "settings_schema": {
+    "enabled": {
+      "type": "boolean",
+      "default": true,
+      "label": "在导航里显示"
+    }
+  }
+}

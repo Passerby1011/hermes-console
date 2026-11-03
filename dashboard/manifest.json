@@ -1,0 +1,11 @@
+{
+  "name": "hermes-console",
+  "label": "控制台",
+  "description": "统一面板：概览 / 天气 / 升级（本期地基，分区逐卡迁移）",
+  "icon": "LayoutDashboard",
+  "version": "0.1.0",
+  "tab": { "path": "/console", "position": "end" },
+  "entry": "dist/index.js",
+  "css": "dist/style.css",
+  "api": "plugin_api.py"
+}

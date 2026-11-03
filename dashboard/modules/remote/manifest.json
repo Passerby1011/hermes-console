@@ -1,0 +1,11 @@
+{
+  "id": "remote",
+  "label": "远端后端",
+  "version": "1.0.0",
+  "nav_order": 90,
+  "default_enabled": true,
+  "api_module": "api_remote",
+  "section": "remote",
+  "requires": [],
+  "settings_schema": {}
+}

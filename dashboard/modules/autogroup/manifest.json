@@ -1,0 +1,11 @@
+{
+  "id": "autogroup",
+  "label": "项目分组",
+  "version": "1.0.0",
+  "nav_order": 40,
+  "default_enabled": true,
+  "api_module": "api_autogroup",
+  "section": "autogroup",
+  "requires": [],
+  "settings_schema": {}
+}

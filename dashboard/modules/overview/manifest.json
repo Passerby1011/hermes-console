@@ -1,0 +1,17 @@
+{
+  "id": "overview",
+  "label": "概览",
+  "version": "1.0.0",
+  "nav_order": 10,
+  "default_enabled": true,
+  "api_module": "api_overview",
+  "section": "overview",
+  "requires": [],
+  "settings_schema": {
+    "enabled": {
+      "type": "boolean",
+      "default": true,
+      "label": "在导航里显示"
+    }
+  }
+}

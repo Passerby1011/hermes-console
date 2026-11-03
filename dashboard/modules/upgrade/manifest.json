@@ -1,0 +1,11 @@
+{
+  "id": "upgrade",
+  "label": "升级",
+  "version": "1.0.0",
+  "nav_order": 60,
+  "default_enabled": true,
+  "api_module": "api_upgrade",
+  "section": "upgrade",
+  "requires": [],
+  "settings_schema": {}
+}

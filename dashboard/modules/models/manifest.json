@@ -1,0 +1,11 @@
+{
+  "id": "models",
+  "label": "模型",
+  "version": "1.0.0",
+  "nav_order": 25,
+  "default_enabled": true,
+  "api_module": "api_models",
+  "section": "models",
+  "requires": [],
+  "settings_schema": {}
+}

@@ -23285,10 +23285,11 @@ function ConsoleApp() {
     send("/reload", {}, { method: "POST" }).then(function(res) {
       var payload = res && res.data || {};
       if (!res || res.ok === false) {
-        reloadState[1]({
-          phase: "error",
-          message: res && res.message || "重载请求失败"
-        });
+        var msg = String(res && res.message || "重载请求失败");
+        if (/^404\b/.test(msg) || /not found|Not Found/i.test(msg)) {
+          msg = "当前 serve 进程还是旧代码（没有 /reload 端点）。请先重启一次 serve 让它加载到本插件的新后端；之后再改 dashboard/*.py 就可以直接点这个按钮，不用再重启。";
+        }
+        reloadState[1]({ phase: "error", message: msg });
         return;
       }
       if (!payload.ok) {

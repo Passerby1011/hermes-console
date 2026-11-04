@@ -722,14 +722,26 @@
   letter-spacing: 0.02em;
 }
 
+/* 一行的**外观**（高、内距、字号、垂直居中）。**故意不含列定义**：
+   `.hc-row` 在 `src/` 里不止被表格用 —— `models.js` 的「整块内容塞一行」（1 个子元素、
+   自己用内联 `flex-direction: column`）和 `overview.js` 的三列自检行也在用它。基类写死
+   四列会把这两种消费者挤进第 1 列、其余列留空。列定义一律下放到具体容器：
+     * 表格行：`.hc-rows .hc-row`（默认比列、`--row-cols` 覆盖、窄档 3 列）；
+     * 整块堆叠行：`.hc-rows--stack .hc-row`；
+     * 自检行：`.hc-rows--selfcheck .hc-row`。
+   新增使用 `.hc-row` 的地方，如果不在 `.hc-rows` 容器里，必须显式换成上面某一个或补专用类。 */
 .hc-row {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto auto auto;
   align-items: center;
   gap: var(--s2);
   min-height: var(--row-h);
   padding: 0 var(--s3);
   font-size: var(--fs-sm);
+}
+
+/* 只有**真正在列表容器里**的行才吃列定义（表头 `.hc-rows__head` 的 `--row-cols` 同源）。 */
+.hc-rows .hc-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto auto;
 }
 
 /* 定时任务：列 = 任务名 / 下次执行 / 状态 / 作用域。定宽列（不是 auto），
@@ -740,6 +752,27 @@
 
 .hc-rows--cron .hc-row {
   grid-template-columns: var(--row-cols);
+}
+
+/* 自检行（overview.js「分区自检」）：三列 —— 子路由 / 状态 / 宿主接口（或失败原因）。 */
+.hc-rows--selfcheck {
+  --row-cols: minmax(0, 96px) 88px minmax(0, 1fr);
+}
+
+.hc-rows--selfcheck .hc-row,
+.hc-rows--selfcheck .hc-rows__head {
+  grid-template-columns: var(--row-cols);
+}
+
+/* 整块堆叠行（models.js 的「写入结果 / 回滚结果 / 批次账本 / 预览」）：一行是**一整块内容**
+   （标题 + 若干行说明），不是表格的一行。这里把每一行摆成纵向 flex，子元素自己决定排布；
+   绝不能落到 `.hc-rows .hc-row` 的 4 列网格上（那会把整块塞进第 1 列）。 */
+.hc-rows--stack .hc-row {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--s1);
+  padding: var(--s2) var(--s3);
 }
 
 .hc-row + .hc-row {
@@ -1053,8 +1086,22 @@
     display: none;
   }
 
-  .hc-row {
+  /* 窄档：表格行三列（作用域列已在上一条收起）。只作用于列表容器里的行 ——
+     基类 `.hc-row` 不再有列定义，堆叠/自检行也不会被这条误伤。 */
+  .hc-rows .hc-row {
     grid-template-columns: minmax(0, 1fr) auto auto;
+  }
+
+  /* 定时任务仍用上面那套定宽三列（--row-cols）：通用三列只给没定义 --row-cols 的表。
+     两条选择器同权重，靠源码顺序让这条覆盖通用那条。 */
+  .hc-rows--cron .hc-row {
+    grid-template-columns: var(--row-cols);
+  }
+
+  /* 自检行同理：它本来就是三列（96px / 88px / 1fr），不能被通用三列改写成 auto auto。 */
+  .hc-rows--selfcheck .hc-row,
+  .hc-rows--selfcheck .hc-rows__head {
+    grid-template-columns: var(--row-cols);
   }
 
   /* 会话列表第 4 列（profile 名）同样收起：留着会折到第二行，行高就不整齐了。

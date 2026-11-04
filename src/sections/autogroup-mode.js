@@ -23,7 +23,7 @@
  *      （React 19 dev 对 props.key 会报 console error）。
  */
 import { jsx as jsxRuntime, jsxs as jsxsRuntime } from 'react/jsx-runtime'
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 import { num } from '../lib/format.js'
 import { get, send } from '../lib/rest.js'
@@ -245,6 +245,32 @@ export function AutogroupModePanel(props) {
   var undo = undoState[0]
   var setUndo = undoState[1]
 
+  /**
+   * 扫描 job 轮询的**生命周期句柄**（F-07）。
+   *
+   * 扫描是「发一个 job 然后每 2s 查一次进度、最多查 4 分钟」：这串 `setTimeout` 是递归的，
+   * 不属于任何 effect，所以**组件卸载不会自动停**。用户切走分区后，它会继续打到
+   * `/autogroup/job/{id}` 上限为止，并对已卸载组件 `setState`。对照 `autogroup.js` /
+   * `autogroup-ai.js` 的写法，这里补上同样的 `cancelled + clearTimeout`：
+   *
+   *   * `cancelledRef`：卸载即置 true；`pollScan` 每轮开头先看它，为真直接返回、不再排下一轮；
+   *   * `timerRef`：当前这一轮的 timeout 句柄，卸载时清掉（否则最后一轮还会醒一次）；
+   *   * 挂载 effect 里把它重置为 false —— 卸载后再挂载要能重新正常扫描（React 18 StrictMode
+   *     的「挂载→卸载→再挂载」也会走到这条路径，不能把组件永久钉死在 cancelled）。
+   */
+  var cancelledRef = useRef(false)
+  var timerRef = useRef(null)
+  useEffect(function () {
+    cancelledRef.current = false
+    return function () {
+      cancelledRef.current = true
+      if (timerRef.current !== null) {
+        clearTimeout(timerRef.current)
+        timerRef.current = null
+      }
+    }
+  }, [])
+
   var rebuild = mode === MODE_REBUILD_ALL
   var busy = plan.phase === 'loading' || applied.phase === 'busy' || undo.phase === 'busy'
   var planData = plan.phase === 'ready' ? plan.data : null
@@ -323,7 +349,11 @@ export function AutogroupModePanel(props) {
 
   /** 轮询扫描 job，done 之后立刻拉一次零写入预览。 */
   function pollScan(jobId, body, startedAt) {
+    // ★ 每个 Promise 回调入口都要重新判一次「已卸载」：请求在卸载前发出、卸载后才回来，
+    //   这时如果继续往下走，既会对已卸载组件 setState，也会重新排下一轮轮询。
+    if (cancelledRef.current) return
     get('/autogroup/job/' + encodeURIComponent(jobId)).then(function (res) {
+      if (cancelledRef.current) return
       if (!res || res.ok === false) {
         setPlan({
           phase: 'error',
@@ -359,7 +389,10 @@ export function AutogroupModePanel(props) {
           })
           return
         }
-        setTimeout(function () { pollScan(jobId, body, startedAt) }, SCAN_POLL_MS)
+        timerRef.current = setTimeout(function () {
+          timerRef.current = null
+          pollScan(jobId, body, startedAt)
+        }, SCAN_POLL_MS)
         return
       }
       var result = job.result || {}

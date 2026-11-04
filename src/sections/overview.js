@@ -1350,12 +1350,10 @@ function SelfCheckBlock(props) {
     body = jsxs('div', {
       children: [
         jsx('div', {
-          // 借用 `hc-rows--cron` 只为让 `.hc-row` 也用 `var(--row-cols)` 排三列 ——
-          // 本卡约束不许改 style.css，而默认 `.hc-row` 是四列 auto，会和表头错位。
-          // 列定义在这里用行内变量覆盖成自检的三列。
-          className: 'hc-rows hc-rows--cron',
+          // 自检行是**三列**（子路由 / 状态 / 宿主接口或失败原因），不是表格的 4 列。
+          // 列定义在 style.css 的 `.hc-rows--selfcheck`（基类 `.hc-row` 已不带列定义）。
+          className: 'hc-rows hc-rows--selfcheck',
           'data-hc-table': 'selfcheck',
-          style: { '--row-cols': 'minmax(0, 96px) 88px minmax(0, 1fr)' },
           children: [
             jsx(
               'div',

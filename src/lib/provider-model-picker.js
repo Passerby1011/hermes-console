@@ -141,6 +141,13 @@ export function ProviderModelPicker(props) {
    */
   var nonceState = useState(0)
   var nonce = nonceState[0]
+  /**
+   * 「高级：手填模型名」的后端校验状态（`GET /models/validate`，只读）。
+   * `phase`: idle（还没校验 / 输入已变）| checking | ok | error。
+   * 失败原因必须显示在选择器下方 —— 清单外的名字是唯一能绕过清单的入口，不能静默放行。
+   */
+  var validateState = useState({ phase: 'idle', message: '', model: '' })
+  var validation = validateState[0]
 
   var providersQuery = useQuery(
     PICKER_CACHE_PREFIX + 'providers/' + agent,
@@ -274,10 +281,56 @@ export function ProviderModelPicker(props) {
   var onAdvancedModel = function (event) {
     advancedModelState[1](textOf(event.target.value))
     advancedDirtyState[1](true)
+    // 输入变了 ⇒ 上一次的校验结论作废（否则旧结论会贴在一个已经不同的名字上）。
+    validateState[1]({ phase: 'idle', message: '', model: '' })
   }
 
+  /**
+   * 「用这个名字」= 交付一个**清单外的模型名**。交付前先调后端只读校验：
+   *   `GET /models/validate?agent=&provider=&model=`（`dashboard/api_models.py::validate`）
+   *
+   * 为什么要这一步：清单外的名字是唯一绕过「provider 的模型清单」的入口，后端写入口
+   * 默认会 400 拒绝（`value_rejected`）。提前校验能把这个 400 变成「在选择器下方当场看到
+   * 原因」，而不是保存到一半才炸。**只读**：这个请求不写任何配置。
+   *
+   * 带 `allow_unlisted=1`：调用方本来就会以 `allow_unlisted_model: true` 提交，校验口径
+   * 必须与写入口一致；校验不通过（例如 provider 不认识 / 名字非法）时后端回 400 + 可读
+   * `message`，这里**原样显示、不吞**，并且**不放行**（不 emit）。
+   *
+   * 后端没起 / 网络失败时同样拦住并显式说原因：宁可让用户重试，也不要假装校验过。
+   */
   var applyAdvanced = function () {
-    emit(provider, textOf(advancedModel).trim(), true)
+    var next = textOf(advancedModel).trim()
+    if (!next) {
+      validateState[1]({ phase: 'error', message: '模型名不能为空：手填要给出具体名字', model: next })
+      return
+    }
+    if (validateState[0].phase === 'checking') return
+    validateState[1]({ phase: 'checking', message: '', model: next })
+    get('/models/validate', {
+      params: { agent: agent, provider: provider, model: next, allow_unlisted: '1' },
+      timeoutMs: 20000
+    }).then(function (result) {
+      if (result && result.ok === false) {
+        validateState[1]({
+          phase: 'error',
+          message: '校验没过，没有应用：' + (result.message || '后端没有给原因'),
+          model: next
+        })
+        return
+      }
+      var body = result && result.data && typeof result.data === 'object' ? result.data : {}
+      var note = textOf(body.note)
+      validateState[1]({
+        phase: 'ok',
+        message: body.unverified
+          ? '后端校验通过，但该名字不在 ' + provider + ' 的清单里 ⇒ 会记为未校验。' + (note ? ' ' + note : '')
+          : '后端校验通过。' + (note ? ' ' + note : ''),
+        model: next
+      })
+      advancedDirtyState[1](false)
+      emit(provider, next, true)
+    })
   }
 
   var providerOptions = []
@@ -784,9 +837,10 @@ export function ProviderModelPicker(props) {
                     type: 'button',
                     className: 'hc-btn hc-btn--tiny',
                     'data-pmp-advanced-apply': idp,
-                    disabled: disabled || !advancedDirty,
+                    'data-pmp-advanced-checking': validation.phase === 'checking' ? '1' : '0',
+                    disabled: disabled || !advancedDirty || validation.phase === 'checking',
                     onClick: applyAdvanced,
-                    children: '用这个名字'
+                    children: validation.phase === 'checking' ? '校验中…' : '用这个名字'
                   }, 'btn')
                 ]
               },
@@ -797,8 +851,29 @@ export function ProviderModelPicker(props) {
               style: { fontSize: 'var(--fs-xs)', marginTop: 'var(--s1)', overflowWrap: 'anywhere' },
               children: textOf(source.advancedNote) ||
                 '主路径是下拉；这里只给"该 provider 的清单里确实没有、但上游认这个名字"的情况。' +
-                  '保存时调用方会带 allow_unlisted_model=true，后端会把它记为未校验。'
-            }, 'note')
+                  '点「用这个名字」前会先调只读校验（GET /models/validate），通过后调用方才会以 ' +
+                  'allow_unlisted_model=true 保存；后端会把它记为未校验。'
+            }, 'note'),
+            // ★ 校验结论：失败必须**留在可见处**（这是清单外名字唯一的把关点，不能只写 console）。
+            validation.phase === 'idle'
+              ? null
+              : jsx('div', {
+                  'data-pmp-validate': idp,
+                  'data-pmp-validate-phase': validation.phase,
+                  'data-pmp-validate-model': validation.model,
+                  'data-pmp-validate-error': validation.phase === 'error' ? '1' : '0',
+                  role: validation.phase === 'error' ? 'alert' : undefined,
+                  style: {
+                    fontSize: 'var(--fs-xs)',
+                    marginTop: 'var(--s1)',
+                    overflowWrap: 'anywhere',
+                    fontWeight: validation.phase === 'error' ? 600 : 400,
+                    color: validation.phase === 'error' ? 'var(--ui-danger, inherit)' : 'var(--ui-muted)'
+                  },
+                  children: validation.phase === 'checking'
+                    ? '正在向后端校验 ' + validation.model + ' …'
+                    : validation.message
+                }, 'validate')
           ]
         },
         'advanced'

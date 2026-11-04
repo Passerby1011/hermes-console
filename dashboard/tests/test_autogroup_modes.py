@@ -100,7 +100,8 @@ def _seed_mode_b(sb):
 
 
 _PLAN_API_REMOVED = (
-    "t_ac537221：/autogroup/plan、/autogroup/apply_plan、/autogroup/ops 已下线；"
+    "t_ac537221：/autogroup/plan、/autogroup/apply_plan 已下线，POST /autogroup/ops（旧写入口）"
+    "也已删除；GET /autogroup/ops 仍存活，但它是**只读**写操作台账，不是本类测的计划/落库入口。"
     "A/B 两条计划流水线并入 /autogroup/scan + /autogroup/apply。本用例保留作历史契约参考。"
 )
 

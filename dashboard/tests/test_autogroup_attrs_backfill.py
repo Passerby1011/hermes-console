@@ -20,8 +20,9 @@ import autogroup_projects as ent  # noqa: E402
 
 
 @unittest.skip(
-    "t_ac537221：POST /autogroup/project/attrs/backfill 路由已下线（属性回填并入项目创建/导入路径）；"
-    "本文件保留作历史契约参考，不再对当前代码执行。")
+    "t_ac537221：POST /autogroup/project/attrs/backfill 已下线（属性回填是一次性迁移，"
+    "实测 0 条缺失，已并入项目创建路径）。路由不删，只保留 410 墓碑给老脚本可读原因，"
+    "所以本文件反对的是「回填能写库」这个旧契约，保留作历史参考。")
 class AttrsBackfillTest(unittest.TestCase):
     """存量 17 个项目没有 project_attrs 行 ⇒ 必须显式确认回填，且可撤销。"""
 

@@ -8209,3 +8209,137 @@
 
 /* 覆盖口径 / 后端附注：现在和「每个 agent 的计件」共用一个 <details class="hc-adv__ledger">，
    样式走上面那组（.hc-adv__ledger）。原来独立的 .hc-adv__notes-fold 已随之删除。 */
+
+/* ===========================================================================
+ * 执行 Lane（只读心跳面板）
+ *
+ * 结构：.hc-lane-root = 标题行 + .hc-lanes（每条 lane 一张 .hc-lane 卡）。
+ * 状态色只做辅助（左边框 + 小圆点），**文字是主通道**（在线 / 心跳停滞 / 离线 / 未知），
+ * 所以黑白打印或色盲用户都不丢信息。颜色全部走 var(--ui-*)，没有字面色值；
+ * 卡片只用 1px stroke，无阴影。本面板没有任何按钮。
+ * =========================================================================== */
+
+.hc-lane-root {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s4);
+  min-width: 0;
+}
+
+.hc-lanes {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--s4);
+}
+
+@container hc (min-width: 1200px) {
+  .hc-lanes {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.hc-lane {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s3);
+  min-width: 0;
+  padding: var(--s4);
+  border: var(--hairline) solid var(--ui-stroke-secondary, currentColor);
+  border-left: 3px solid var(--ui-text-quaternary, currentColor);
+  border-radius: var(--r-md);
+  background: var(--ui-bg-secondary, transparent);
+}
+
+.hc-lane--online {
+  border-left-color: var(--ui-accent, currentColor);
+}
+
+.hc-lane--stalled {
+  border-left-color: var(--ui-warning, var(--ui-orange, currentColor));
+}
+
+.hc-lane--offline {
+  border-left-color: var(--ui-danger, var(--ui-red, currentColor));
+}
+
+.hc-lane__head {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--s2);
+  min-width: 0;
+}
+
+/* 色点：纯辅助，aria-hidden；旁边一定有状态文字 */
+.hc-lane__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  flex: none;
+  background: var(--ui-text-quaternary, currentColor);
+}
+
+.hc-lane--online .hc-lane__dot {
+  background: var(--ui-accent, currentColor);
+}
+
+.hc-lane--stalled .hc-lane__dot {
+  background: var(--ui-warning, var(--ui-orange, currentColor));
+}
+
+.hc-lane--offline .hc-lane__dot {
+  background: var(--ui-danger, var(--ui-red, currentColor));
+}
+
+.hc-lane__name {
+  font-size: var(--fs-md);
+  font-weight: 600;
+  margin: 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.hc-lane__status {
+  font-size: var(--fs-sm);
+  color: var(--ui-text-secondary, inherit);
+  white-space: nowrap;
+}
+
+.hc-lane__rows {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s1);
+  min-width: 0;
+}
+
+.hc-lane__row {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s2);
+  min-width: 0;
+  font-size: var(--fs-sm);
+}
+
+.hc-lane__key {
+  flex: none;
+  width: 72px;
+  color: var(--ui-text-quaternary, inherit);
+}
+
+.hc-lane__val {
+  min-width: 0;
+  color: var(--ui-text-secondary, inherit);
+  overflow-wrap: anywhere;
+}
+
+/* 心跳坏掉时的原话：等宽、换行，不截断 */
+.hc-lane__error {
+  padding: var(--s2);
+  border: var(--hairline) dashed var(--ui-warning, var(--ui-orange, currentColor));
+  border-radius: var(--r-sm);
+  font-family: var(--ui-font-mono, monospace);
+  font-size: var(--fs-xs);
+  color: var(--ui-text-secondary, inherit);
+  overflow-wrap: anywhere;
+}
+

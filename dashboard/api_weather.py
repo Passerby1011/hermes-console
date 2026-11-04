@@ -155,7 +155,12 @@ def _weather_lib_candidates() -> List[Path]:
     home = _hermes_home()
     out.append(home / "scripts" / "weather_lib.py")
     out.append(home / "plugins" / "weather" / "weather_lib.py")
-    out.append(Path("D:/hermes-data/hermes/scripts/weather_lib.py"))
+    # 兜底：显式 HERMES_HOME。**不再写死任何机器绝对路径** —— 原实现最后一条是
+    # ``Path("D:/hermes-data/hermes/scripts/weather_lib.py")``，换设备后它指向不存在的盘符，
+    # 只是靠「候选路径不存在就跳过」侥幸不崩，但会把可移植性写成假的。
+    env_home = (os.environ.get("HERMES_HOME") or "").strip()
+    if env_home:
+        out.append(Path(env_home) / "scripts" / "weather_lib.py")
     return out
 
 

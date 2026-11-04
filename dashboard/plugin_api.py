@@ -51,7 +51,9 @@ DOMAIN_MODULES = ("api_overview", "api_weather", "api_upgrade", "api_agents", "a
                   "api_autogroup", "api_autogroup_panel",
                   "api_autogroup_projects",
                   "api_advisor", "api_console_settings", "api_autotitler", "api_vcc", "api_remote",
-                  "api_models", "api_lanes")
+                  "api_models", "api_lanes",
+                  # 热重载：POST /reload（就地重挂载本插件，不重启 serve）；见 api_reload.py
+                  "api_reload")
 
 
 def _import_domain(modname: str) -> ModuleType:

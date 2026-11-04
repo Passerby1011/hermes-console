@@ -23277,6 +23277,39 @@ function ConsoleApp() {
     invalidatePrefix("settings");
     flashState[1](true);
   }
+  var reloadState = useState19({ phase: "idle", message: "" });
+  var reloadView = reloadState[0];
+  function doReload() {
+    if (reloadView.phase === "running") return;
+    reloadState[1]({ phase: "running", message: "" });
+    send("/reload", {}, { method: "POST" }).then(function(res) {
+      var payload = res && res.data || {};
+      if (!res || res.ok === false) {
+        reloadState[1]({
+          phase: "error",
+          message: res && res.message || "重载请求失败"
+        });
+        return;
+      }
+      if (!payload.ok) {
+        reloadState[1]({
+          phase: "error",
+          message: payload.advice || "重载未生效"
+        });
+        return;
+      }
+      reloadState[1]({ phase: "ok", message: payload.advice || "已重载" });
+      window.setTimeout(function() {
+        window.location.reload();
+      }, 500);
+    }).catch(function(err) {
+      reloadState[1]({
+        phase: "error",
+        message: "重载异常：" + String(err && err.message || err)
+      });
+    });
+  }
+  var reloadLabel = reloadView.phase === "running" ? "重载中…" : reloadView.phase === "ok" ? "已重载" : reloadView.phase === "error" ? "重载失败" : "重载";
   var sectionNodes = active ? [
     jsxs18(
       "div",
@@ -23398,6 +23431,14 @@ function ConsoleApp() {
                     title: "重新读取已打开分区的数据（含设置页已加载的插件清单 / 配置；保留当前内容，不闪屏）",
                     onClick: refresh2,
                     children: flash ? "已刷新" : "刷新"
+                  }),
+                  jsx19("button", {
+                    type: "button",
+                    className: "hc-btn" + (reloadView.phase === "ok" ? " hc-btn--done" : "") + (reloadView.phase === "error" ? " hc-btn--danger" : ""),
+                    title: reloadView.phase === "error" ? reloadView.message + " —— 后端失败会回滚到旧代码，面板仍可用；看 serve 日志确认原因后再点一次" : "不重启进程，把运行中的后端重新 import 一遍（改完 dashboard/*.py 用这个），并在 dist 落后于 src 时顺手重建前端；成功后自动刷新页面",
+                    disabled: reloadView.phase === "running",
+                    onClick: doReload,
+                    children: reloadLabel
                   }),
                   jsx19(Connection, { status: scope.status, reason: scope.reason })
                 ]

@@ -31,7 +31,7 @@ import { useEffect, useState } from 'react'
 
 import { invalidatePrefix, refreshAll, useQuery } from './lib/query.js'
 import { useScope } from './lib/scope.js'
-import { get } from './lib/rest.js'
+import { get, send } from './lib/rest.js'
 import { readPref, writePref } from './lib/storage.js'
 import { Empty } from './lib/states.js'
 import { OverviewSection } from './sections/overview.js'
@@ -427,6 +427,71 @@ export function ConsoleApp() {
     flashState[1](true)
   }
 
+  /**
+   * 顶部「重载」= 让**运行中的代码**换成磁盘上的新代码，不重启 serve 进程。
+   *
+   * 为什么需要它（老板反复踩的两个坑）：
+   *   * 后端 `dashboard/*.py` 只在 serve 启动时 import 一次，改完不重启 = 界面拿到的永远
+   *     是旧逻辑（"前端对了、数据不对"）；
+   *   * 前端 `dist/` 是 `src/` 的构建产物，改了 src 不跑 build = 浏览器加载的还是旧包
+   *     （"代码明明改了、界面一点没变"）。
+   *
+   * 这个按钮调 `POST /reload`（见 `dashboard/api_reload.py`）：后端摘路由 → 清
+   * `sys.modules` → 让宿主重新 `exec_module`，前端在 dist 落后时顺手重建。整个过程
+   * **不杀进程、不重启网关**。
+   *
+   * 成功后必须 `location.reload()`：后端已换新，但**当前页面里跑的还是旧 JS bundle**，
+   * 不重新拉一次 dist 就还是旧界面 —— 那正是"面板和后端对不上"的现象本身。
+   *
+   * 失败时不清空界面：后端有回滚（`rolled_back`），这里只把真实原因显示出来。
+   */
+  var reloadState = useState({ phase: 'idle', message: '' })
+  var reloadView = reloadState[0]
+
+  function doReload() {
+    if (reloadView.phase === 'running') return
+    reloadState[1]({ phase: 'running', message: '' })
+    send('/reload', {}, { method: 'POST' })
+      .then(function (res) {
+        var payload = (res && res.data) || {}
+        if (!res || res.ok === false) {
+          reloadState[1]({
+            phase: 'error',
+            message: (res && res.message) || '重载请求失败',
+          })
+          return
+        }
+        if (!payload.ok) {
+          reloadState[1]({
+            phase: 'error',
+            message: payload.advice || '重载未生效',
+          })
+          return
+        }
+        reloadState[1]({ phase: 'ok', message: payload.advice || '已重载' })
+        // 后端已换新，但当前页面跑的还是旧 bundle：重新加载才能拿到新 dist。
+        // 留 500ms 让「已重载」的反馈被看见，不是假装进度。
+        window.setTimeout(function () {
+          window.location.reload()
+        }, 500)
+      })
+      .catch(function (err) {
+        reloadState[1]({
+          phase: 'error',
+          message: '重载异常：' + String((err && err.message) || err),
+        })
+      })
+  }
+
+  var reloadLabel =
+    reloadView.phase === 'running'
+      ? '重载中…'
+      : reloadView.phase === 'ok'
+        ? '已重载'
+        : reloadView.phase === 'error'
+          ? '重载失败'
+          : '重载'
+
   // 只渲染当前分区：切走即卸载（旧分区留在 DOM 里只增不减 —— 实测 11 个分区逛完 574 → 9816 节点，
   // 且每个分区自己的轮询会继续跑）。数据走 lib/query.js 的模块级缓存，所以切回来命中缓存、不重拉；
   // 代价是各分区的滚动位置不再跨切换保留（切回一个分区从顶部开始），这是本卡明示接受的取舍。
@@ -561,6 +626,22 @@ export function ConsoleApp() {
                     title: '重新读取已打开分区的数据（含设置页已加载的插件清单 / 配置；保留当前内容，不闪屏）',
                     onClick: refresh,
                     children: flash ? '已刷新' : '刷新'
+                  }),
+                  jsx('button', {
+                    type: 'button',
+                    className:
+                      'hc-btn' +
+                      (reloadView.phase === 'ok' ? ' hc-btn--done' : '') +
+                      (reloadView.phase === 'error' ? ' hc-btn--danger' : ''),
+                    title:
+                      reloadView.phase === 'error'
+                        ? reloadView.message +
+                          ' —— 后端失败会回滚到旧代码，面板仍可用；看 serve 日志确认原因后再点一次'
+                        : '不重启进程，把运行中的后端重新 import 一遍' +
+                          '（改完 dashboard/*.py 用这个），并在 dist 落后于 src 时顺手重建前端；成功后自动刷新页面',
+                    disabled: reloadView.phase === 'running',
+                    onClick: doReload,
+                    children: reloadLabel
                   }),
                   jsx(Connection, { status: scope.status, reason: scope.reason })
                 ]

@@ -132,7 +132,7 @@ C3 起它还会喂一份按后端真实响应形状构造的概览桩数据，�
   `scripts/weather_lib.py`（彩云 → 和风 → Open-Meteo，**降级顺序原样不动**），本模块只读不改；
   每条响应都带 `source` / `source_label` / `fetched_at` / `sources`（三源各自 ✓ 或 ×空）/
   `units`，来源不靠猜（实况用 weather_lib 自报的 `source`，逐日/逐时用只读探针记录三源返回值后判定）。
-  地点默认取 `HERMES_WEATHER_PLACE`（缺省「家」= 肥西/方岗翡翠苑北门），任何城市或「纬度,经度」
+  地点默认取 `HERMES_WEATHER_PLACE`（缺省按后端配置的地点，可设为任何城市或「纬度,经度」）
   都可临时查。`pm25` 只有彩云命中时才有，和风/Open-Meteo 那条路不伪造，前端显示 `—`。
 - **Advisor 审核台（C9b）**：`/advisor/{advice,advice/{id},decision,summary,settings}` + 自检。
   数据源**只有** `plugins/advisor/audit.py`（C9a 的 append-only 台账），本模块不读日志、不拼状态。

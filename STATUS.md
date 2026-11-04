@@ -367,7 +367,7 @@ desktop/plugin.js         197078 B  sha256=e709d42ed9161d86ef04f50abe8522837afd5
 | 逐小时（默认 24h） | 同上 `.hc-wx-hours` | ✅ 横向滚动，每小时给 时:分 / 温度 / 现象 / 降水概率 |
 | 多日（默认 7 天） | 同上 `.hc-wx-days` | ✅ 一行一天：日期+周几 / 现象 / 最低~最高 / 降水概率 |
 | 「N 小时后」查询 | 同上 `.hc-wx-seg` | ✅ 1/6/12/24/48h 分段选择，结果内联（**照抄** weather_lib 原话） |
-| 城市/坐标输入 | 同上 `.hc-wx-toolbar` | ✅ 默认后端配置地点（`HERMES_WEATHER_PLACE`，缺省「家」= 肥西/方岗翡翠苑北门），输入框可临时查任何城市或「纬度,经度」，带「复位」 |
+| 城市/坐标输入 | 同上 `.hc-wx-toolbar` | ✅ 默认后端配置地点（`HERMES_WEATHER_PLACE`，缺省按后端配置），输入框可临时查任何城市或「纬度,经度」，带「复位」 |
 | 三态复用 C2 | `lib/states.js` | ✅ 加载 Skeleton / 无数据 Empty / 失败 ErrorState（带后端原话，含逐源 ×空） |
 | 拿不到就 `—`，不填 0 | `dec()/unit()/popText()/descText()` 四个纯函数 | ✅ 探针用「逐小时 pop=null」「多日缺 pop 键」两处桩数据证明渲染成 `降水 —` |
 | 单位标在界面 | 后端 `units` 表驱动 | ✅ ℃ / % / km/h / μg/m³ |

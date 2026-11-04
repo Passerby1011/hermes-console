@@ -9,7 +9,7 @@
   A. 清掉 OPENAI_BASE_URL ⇒ openai-api 回落到 https://api.openai.com/v1（builtin，不空不崩）
   B. config 显式 base_url 优先于 env（env 同时给不同值，必须取 config）⇒ source=config
   C. _models_endpoint_url 三种边界（/v1 结尾、不以 /v1 结尾、尾部斜杠）都不得出现 /v1/v1/
-  D. 真实中转站地址推出的 URL 精确等于 https://newapi.passerbywtj.club/v1/models
+  D. 真实中转站地址推出的 URL 精确等于 <base_url>/v1/models（用探针自造的示例域名，不写真实地址）
   E. env 与 config 都没有 ⇒ source=builtin，base_url 非空（不得静默空值）
   F. 多 profile 隔离：两个 profile 的 .env 给不同地址 ⇒ 各自读到自己的
   G. registry 结构带 base_url_env_var（且只放变量名）

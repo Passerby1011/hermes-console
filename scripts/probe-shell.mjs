@@ -205,7 +205,7 @@ function weatherFixture(pathname) {
     return {
       ok: true,
       place: '家',
-      place_resolved: { name: '家', resolved: true, lat: 31.721276, lng: 117.149643, qweather_id: '101220104' },
+      place_resolved: { name: '家', resolved: true, lat: 31.2304, lng: 121.4737, qweather_id: '101020100' },
       scope: { kind: 'global', agent: 'code-worker', note: '天气是全局数据' },
       source: 'caiyun',
       source_label: '彩云天气',
@@ -681,7 +681,7 @@ check('查询按钮存在且可点', Boolean(applyBtn && typeof applyBtn.props.o
 applyBtn.props.onClick()
 const a4d = await A.render(40)
 const nowCall = A.harness.calls.filter((c) => c.path.indexOf('/weather/now') === 0).pop()
-check('按城市查询后请求带 place=北京（不写死肥西）', /place=/.test(nowCall.path) && /%E5%8C%97%E4%BA%AC/.test(nowCall.path),
+check('按城市查询后请求带 place=北京（不写死默认地点）', /place=/.test(nowCall.path) && /%E5%8C%97%E4%BA%AC/.test(nowCall.path),
   nowCall.path)
 check('输入框里保留用户输入', findByClass(a4d.nodes, 'hc-wx-input')[0].props.value === '北京')
 

@@ -46,3 +46,9 @@ state.json
 
 # ── Hermes 本地状态
 .hermes/
+
+# ── 执行 lane 的工作树（每个 worktree 都是独立的 git 仓库）
+#    误加进索引会变成 gitlink（submodule 占位），克隆方拿到的是空目录。
+#    2026-11-04 踩过一次：git add -A 把 4 个 worktree 当子模块加进去，
+#    仓库体积从 8.6M 涨到 48M。这条必须留着。
+.worktrees/

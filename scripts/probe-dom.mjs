@@ -198,7 +198,7 @@ function weatherFixture(pathname) {
     return {
       ok: true,
       place: '家',
-      place_resolved: { name: '家', resolved: true, lat: 31.721276, lng: 117.149643 },
+      place_resolved: { name: '家', resolved: true, lat: 31.2304, lng: 121.4737 },
       scope: { kind: 'global', agent: 'code-worker' },
       source: 'caiyun',
       source_label: '彩云天气',
@@ -838,7 +838,7 @@ await act(async () => {
 })
 await act(flush)
 await act(flush)
-check('按城市查询后请求带 place=上海（不写死肥西）',
+check('按城市查询后请求带 place=上海（不写死默认地点）',
   restCalls.filter((c) => c.path.indexOf('/weather/now') === 0 && /%E4%B8%8A%E6%B5%B7/.test(c.path)).length >= 1,
   JSON.stringify(restCalls.filter((c) => c.path.indexOf('/weather/now') === 0).map((c) => c.path)))
 

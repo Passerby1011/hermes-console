@@ -126,6 +126,14 @@ def _fallback_home() -> Path:
         candidates.append(Path(__file__).resolve().parents[3])
     except (IndexError, OSError):
         pass
+    try:
+        from _layout import hermes_root
+
+        detected = hermes_root(Path(__file__).resolve().parent)
+        if detected is not None:
+            candidates.append(detected)
+    except Exception:  # noqa: BLE001 - 布局探测失败退回其它候选
+        pass
     env_home = (os.environ.get("HERMES_HOME") or "").strip()
     if env_home:
         candidates.append(Path(env_home))

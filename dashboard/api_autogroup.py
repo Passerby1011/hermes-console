@@ -46,6 +46,7 @@ if str(_DASHBOARD_DIR) not in sys.path:
     # 兄弟模块 api_agents 只能靠 sys.path 找到：本文件被 dashboard 用合成模块名 exec，无包上下文。
     sys.path.insert(0, str(_DASHBOARD_DIR))
 from api_agents import hermes_home  # noqa: E402
+from _layout import plugins_dir  # noqa: E402
 
 router = APIRouter()
 CORE_MODULE_NAME = "hermes_auto_group_core"   # 与插件 __init__.py 同名同文件 ⇒ 同一份模块
@@ -60,7 +61,7 @@ KANBAN_SOURCE = "kanban"
 
 def auto_group_dir() -> Path:
     """``plugins/hermes-auto-group``（与本插件同树，不看 HERMES_HOME 环境变量）。"""
-    return _DASHBOARD_DIR.parents[1] / "hermes-auto-group"
+    return plugins_dir(_DASHBOARD_DIR) / "hermes-auto-group"
 
 
 def _load_core():
@@ -800,6 +801,22 @@ def _job_set(job_id: str, **fields: Any) -> None:
             job.update(fields)
 
 
+def _all_applied_ids(home: Path) -> set:
+    """归属表里**全机器**的 applied id（根库 + 每个 profile 的归属库）。
+
+    ``_run_scan`` 的 ``already_grouped_all`` 是给界面解释「全机器已分组多少」用的，
+    与 ``already_grouped``（本池口径）刻意分开；只读当前 agent 的归属库会把两者写成同一个数。
+    """
+    core = _load_core()
+    ids: set = set()
+    for _name, store_home in agent_homes(None, home):
+        try:
+            ids |= {str(r.get("session_id")) for r in core.load_suggestions(store_home, "applied")}
+        except Exception:  # noqa: BLE001 - 某个 profile 的库坏了不影响其它
+            continue
+    return ids
+
+
 def _scan_pool(home: Path, core: Any, agent: Optional[str]) -> Tuple[List[Dict[str, Any]], set, set]:
     """扫描池：该 agent 的会话（排除 rejected + **排除看板任务会话**），并返回 applied / suggested 的 id 集合。
 
@@ -1146,7 +1163,8 @@ def _run_scan(job_id: str, home: Path, limit: int, *, agent: Optional[str] = Non
         snapshot = _candidate_snapshot(home, core, agent, scope, only_ids=session_ids,
                                        store_home=store_home)
         pool_rows = snapshot["rows"]
-        applied_ids = set(snapshot["applied_ids"])
+        #: 展示用的「全机器 applied」跨所有 agent 归属库；本池 applied 在 snapshot 里。
+        applied_ids = _all_applied_ids(home)
         snapshot_ids = list(snapshot["ids"])
         total_available = len(snapshot_ids)
         page_ids = snapshot_ids[:limit]

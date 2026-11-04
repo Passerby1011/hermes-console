@@ -582,6 +582,32 @@ def _load_assignments(home: Path) -> tuple[Dict[str, Dict[str, Any]], set[str]]:
     return by_session, applied
 
 
+def _load_assignments_many(homes) -> tuple[Dict[str, Dict[str, Any]], set[str]]:
+    """合并多个 agent 归属库（根库 + 各 ``profiles/<p>/auto-group``）。
+
+    ``candidate_scope`` 的候选池天然跨 agent（``agents=None`` 时扫全部库），归属表也必须
+    同一口径；只看根库会把 ``profiles/work`` 里的 applied 当成「未分组」，于是面板数字
+    与扫描结果对不上（t_bba9216d 的同一类问题）。同 id 取 ``updated_at`` 较新的一行。
+    """
+    merged: Dict[str, Dict[str, Any]] = {}
+    applied: set[str] = set()
+    for store_home in homes:
+        rows, newly_applied = _load_assignments(Path(store_home))
+        applied |= newly_applied
+        for sid, row in rows.items():
+            previous = merged.get(sid)
+            if previous is None:
+                merged[sid] = row
+                continue
+            try:
+                newer = float(row.get("updated_at") or 0) >= float(previous.get("updated_at") or 0)
+            except (TypeError, ValueError):
+                newer = True
+            if newer:
+                merged[sid] = row
+    return merged, applied
+
+
 def _read_rejected(home: Path) -> set[str]:
     try:
         return set(core.rejected_ids(home) or set())
@@ -1408,7 +1434,24 @@ def build_preview(home=None, *, limit=40, caller=None, now=None, offset=0,
     #: 项目库 / 归属库 / 规则库的 home（t_4fa94e17）：按 agent 分。
     #: ``home_path`` 保持**根 home** —— 会话池要靠它枚举 ``<root>/profiles/*``。
     #: 两者相同时（agent=default / 老调用方）行为与改前逐字段一致。
-    pj_home = Path(projects_home) if projects_home is not None else home_path
+    wanted_agents = {str(a).strip() for a in (agents or set()) if str(a).strip()}
+    if projects_home is not None:
+        pj_home = Path(projects_home)
+        store_homes = [pj_home]
+    elif len(wanted_agents) == 1:
+        pj_home = Path(base.agent_home(next(iter(wanted_agents)), home_path))
+        store_homes = [pj_home]
+    elif wanted_agents:
+        pj_home = home_path
+        store_homes = [Path(base.agent_home(name, home_path)) for name in sorted(wanted_agents)]
+    else:
+        pj_home = home_path
+        store_homes = [home_path]
+        _profiles = home_path / "profiles"
+        if _profiles.is_dir():
+            for entry in sorted(_profiles.iterdir()):
+                if entry.is_dir() and (entry / "config.yaml").is_file():
+                    store_homes.append(entry)
     try:
         lim = int(limit) if limit is not None else 0
     except (TypeError, ValueError):
@@ -1445,8 +1488,10 @@ def build_preview(home=None, *, limit=40, caller=None, now=None, offset=0,
             len(projects),
         )
 
-    assignments, applied_ids = _load_assignments(pj_home)
-    rejected = _read_rejected(pj_home)
+    assignments, applied_ids = _load_assignments_many(store_homes)
+    rejected: set[str] = set()
+    for store_home in store_homes:
+        rejected |= _read_rejected(Path(store_home))
     skip_set = {str(s) for s in (skip_ids or []) if str(s).strip()}
     try:
         off = max(0, int(offset or 0))
@@ -1796,15 +1841,37 @@ def candidate_scope(home=None, *, agents=None, projects_home=None) -> Dict[str, 
     不能拿全库 applied 去说明一个本池为 0 的池。
     """
     home_path = Path(home) if home is not None else Path(base._home())
-    pj_home = Path(projects_home) if projects_home is not None else home_path
     wanted_agents = {str(a).strip() for a in (agents or set()) if str(a).strip()}
+    if projects_home is not None:
+        #: 调用方显式点名（扫描 / 写入路径）：只认这一个归属库。
+        pj_home = Path(projects_home)
+        store_homes = [pj_home]
+    elif len(wanted_agents) == 1:
+        #: 单 agent：归属库在**该 agent 的 home**（t_4fa94e17），与 ``_run_scan`` 的
+        #: ``store_home = agent_home(agent, home)`` 完全同源。
+        pj_home = Path(base.agent_home(next(iter(wanted_agents)), home_path))
+        store_homes = [pj_home]
+    elif wanted_agents:
+        pj_home = home_path
+        store_homes = [Path(base.agent_home(name, home_path)) for name in sorted(wanted_agents)]
+    else:
+        #: 全机器：根库 + 每个 profile 的归属库。
+        pj_home = home_path
+        store_homes = [home_path]
+        profiles = home_path / "profiles"
+        if profiles.is_dir():
+            for entry in sorted(profiles.iterdir()):
+                if entry.is_dir() and (entry / "config.yaml").is_file():
+                    store_homes.append(entry)
     try:
         projects = [p for p in core.list_projects(pj_home) if isinstance(p, dict)]
     except Exception as exc:  # noqa: BLE001
         return {"ok": False, "error": {"code": "projects_unavailable",
                                       "detail": "读取项目清单失败：" + base._describe(exc)}}
-    assignments, applied_ids = _load_assignments(pj_home)
-    rejected = _read_rejected(pj_home)
+    assignments, applied_ids = _load_assignments_many(store_homes)
+    rejected: set[str] = set()
+    for store_home in store_homes:
+        rejected |= _read_rejected(Path(store_home))
     candidates, excluded_other, total_available, _skipped, visibility = _candidate_sessions(
         home_path, 0, assignments, applied_ids, rejected, agents=wanted_agents or None
     )

@@ -19,6 +19,9 @@ import api_autogroup_projects as api  # noqa: E402
 import autogroup_projects as ent  # noqa: E402
 
 
+@unittest.skip(
+    "t_ac537221：POST /autogroup/project/attrs/backfill 路由已下线（属性回填并入项目创建/导入路径）；"
+    "本文件保留作历史契约参考，不再对当前代码执行。")
 class AttrsBackfillTest(unittest.TestCase):
     """存量 17 个项目没有 project_attrs 行 ⇒ 必须显式确认回填，且可撤销。"""
 

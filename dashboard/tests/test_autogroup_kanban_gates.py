@@ -24,12 +24,28 @@ for extra in (str(DASH), str(Path(__file__).resolve().parent)):
 
 import unittest  # noqa: E402
 
-from project_sandbox import ProjectSandbox, body, status_of  # noqa: E402
+import pytest
 
-import api_autogroup as base  # noqa: E402
-import api_autogroup_ai_apply as aiapply  # noqa: E402
-import autogroup_auto as auto  # noqa: E402
-import autogroup_align as align  # noqa: E402
+_REMOVED_REASON = (
+    "t_ac537221 已把 AI 预览/落库流水线并入 /autogroup/scan + /autogroup/apply；"
+    "api_autogroup_ai_apply / api_autogroup_ai_undo / api_autogroup_ai_run / "
+    "autogroup_ai_contract 等模块已删除。本文件保留作历史契约参考，不再对当前代码执行。"
+)
+_REMOVED_MODULES = {
+    "api_autogroup_ai_apply", "api_autogroup_ai_undo", "api_autogroup_ai_run",
+    "autogroup_ai_contract", "autogroup_ai_projects", "autogroup_ai_store",
+}
+try:
+    from project_sandbox import ProjectSandbox, body, status_of  # noqa: E402
+
+    import api_autogroup as base  # noqa: E402
+    import api_autogroup_ai_apply as aiapply  # noqa: E402
+    import autogroup_auto as auto  # noqa: E402
+    import autogroup_align as align  # noqa: E402
+except ModuleNotFoundError as _exc:
+    if _exc.name not in _REMOVED_MODULES:
+        raise
+    pytestmark = pytest.mark.skip(_REMOVED_REASON)
 
 
 class LegacyApplyKanbanTest(unittest.TestCase):

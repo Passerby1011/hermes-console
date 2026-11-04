@@ -163,6 +163,9 @@ class CreateProjectTest(unittest.TestCase):
                                             "created_by": "hacker"})
             self.assertEqual(status_of(resp), 400)
 
+    @unittest.skip(
+        "t_ac537221：AI 建项目模块 autogroup_ai_projects 已删除；新项目统一走 POST /autogroup/projects"
+        "（同文件 test_legacy_panel_create_uses_real_project_root 覆盖同一约束）。")
     def test_ai_new_project_target_uses_real_project_root(self):
         """AI 新建项目也必须落在既有项目的根里（不另造 home/projects 第二套根）。"""
         import autogroup_ai_projects as ai_projects

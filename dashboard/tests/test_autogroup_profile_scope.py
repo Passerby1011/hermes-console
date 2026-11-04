@@ -121,8 +121,8 @@ class ProfileScopeCase(unittest.TestCase):
         self.addCleanup(setattr, base, "_home", self._orig_home)
 
     # ------------------------------------------------------------------ 建库
-    def _projects(self):
-        conn = sqlite3.connect(str(self.home / "projects.db"))
+    def _write_projects(self, home):
+        conn = sqlite3.connect(str(Path(home) / "projects.db"))
         conn.executescript(PROJECTS_DDL)
         for pid, slug, name in (("p1", "memory", "记忆系统"), ("p2", "infra", "基础设施")):
             folder = self.home / "proj" / slug
@@ -133,18 +133,28 @@ class ProfileScopeCase(unittest.TestCase):
         conn.commit()
         conn.close()
 
-    def _store(self):
-        folder = self.home / "auto-group"
+    def _projects(self):
+        #: 项目库同样按 agent 分（t_4fa94e17）：default 在根，work 在 ``profiles/work``。
+        self._write_projects(self.home)
+        (self.home / "profiles" / "work").mkdir(parents=True, exist_ok=True)
+        self._write_projects(self.home / "profiles" / "work")
+
+    def _assign_store(self, home, rows):
+        folder = Path(home) / "auto-group"
         folder.mkdir(parents=True, exist_ok=True)
         conn = sqlite3.connect(str(folder / "assignments.db"))
         conn.executescript(ASSIGN_DDL)
-        #: 全机器 applied：default 池里 2 条 + work 池里 1 条（合计 3，用来验「本池 vs 全库」）
-        now = 1500.0
-        for sid, slug in (("root-a", "memory"), ("root-b", "infra"), ("work-a", "memory")):
+        for sid, slug in rows:
             conn.execute("INSERT INTO assignments VALUES(?,?,0.9,'人工归入','manual','applied',"
-                         "'b0',?,?)", (sid, slug, now, now))
+                         "'b0',?,?)", (sid, slug, 1500.0, 1500.0))
         conn.commit()
         conn.close()
+
+    def _store(self):
+        #: 归属库按 agent 分（t_4fa94e17）：default 在根库，work 在 ``profiles/work``。
+        #: 全机器 applied = root-a / root-b / work-a，共 3 条（用来验「本池 vs 全库」）。
+        self._assign_store(self.home, (("root-a", "memory"), ("root-b", "infra")))
+        self._assign_store(self.home / "profiles" / "work", (("work-a", "memory"),))
 
     def _state(self):
         #: 根库（= profile ``default``）：3 条可见，其中 2 条已 applied
@@ -214,7 +224,8 @@ class ProfileScopeCase(unittest.TestCase):
         """验收 2/3：按钮 N == 符合条件 N == 真正处理 N（三条路同一个 id 集合）。"""
         sc = self.scope("work")
         core = base._load_core()
-        snap = base._candidate_snapshot(self.home, core, "work", "ungrouped")
+        snap = base._candidate_snapshot(self.home, core, "work", "ungrouped",
+                                        store_home=base.agent_home("work", self.home))
         self.assertEqual(set(snap["ids"]), set(sc["candidate_session_ids"]))
         self.assertEqual(snap["pool"], sc["pool"])
         self.assertEqual(snap["applied_in_pool"], sc["applied_in_pool"])

@@ -86,7 +86,9 @@ STATUSES = ("pending", "delivered", "accepted", "rejected", "dropped")
 # ---------------------------------------------------------------------------
 def advisor_dir() -> Path:
     """``plugins/advisor``（与本插件同树，不看 HERMES_HOME 环境变量）。"""
-    return _DASHBOARD_DIR.parents[1] / "advisor"
+    from _layout import plugins_dir
+
+    return plugins_dir(_DASHBOARD_DIR) / "advisor"
 
 
 def _home() -> Path:

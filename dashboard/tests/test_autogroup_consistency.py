@@ -56,6 +56,9 @@ class ConsistencyAuditTest(unittest.TestCase):
                 self.assertEqual(item["target_path"], str(a))
                 self.assertTrue(item["target_dir_exists"])
 
+    @unittest.skip(
+        "t_ac537221：GET /autogroup/consistency 路由已下线；autogroup_align.audit 的只读性"
+        "由本类其余用例（直接调库函数）覆盖。")
     def test_audit_is_read_only(self):
         with ProjectSandbox() as sb:
             a = sb.add_project("alpha", "Alpha")
@@ -185,6 +188,9 @@ class AlignPreviewTest(unittest.TestCase):
                                            slugs=["alpha"], session_ids=["s2"])["affected"], 0)
 
 
+@unittest.skip(
+    "t_ac537221：POST /autogroup/align 路由已下线（一致性对齐并入 /autogroup/apply 的修复路径）；"
+    "本类保留作历史契约参考。")
 class AlignExecuteTest(unittest.TestCase):
     """A2/A3：写完之后 0 条不一致；撤销后 cwd 逐条回原值。"""
 

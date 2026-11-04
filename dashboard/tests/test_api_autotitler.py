@@ -376,7 +376,9 @@ def test_optimistic_lock_blocks_stale_write(client, home):
     )
     assert resp.status_code == 409
     assert resp.json()["error"]["code"] == "config_changed"
-    assert resp.json()["error"]["unchanged"] is True
+    # 字段名在 api_autotitler.py:949 已改：旧名 unchanged 会被读成「值没变」，
+    # 而这里断言的是「本次一个字节都没写」（值恰恰变了）。断言旧名 = 必然 KeyError。
+    assert resp.json()["error"]["nothing_written"] is True
 
 
 def test_reads_do_not_touch_any_file(client, home):

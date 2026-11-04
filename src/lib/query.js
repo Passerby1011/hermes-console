@@ -125,6 +125,35 @@ export function refreshAll(prefix) {
 }
 
 /**
+ * 按**前缀**把缓存里**已经存在**的条目全部置陈并重取（`at = 0` + 立即 `ensure()`）。
+ *
+ * 和 `refreshAll(prefix)` 的差别看着只有一个，但决定了顶部「刷新」能不能覆盖设置页：
+ * `refresh(key)` 对**不在缓存里**的 key 直接 return —— 而设置页的查询是「按选中 agent
+ * 惰性建 key」（`settings-plugins|<agent>` / `settings-modules|<agent>` /
+ * `settings-plugin|<agent>|<plugin>`，见 `sections/settings.js`），用户没点开那个 agent /
+ * 插件时 key 根本不存在，`refreshAll` 于是**永远刷不到**它们。
+ *
+ * 这里只重置**已存在**的条目，绝不凭空造 key：造 key = 对 `enabled:false` 的查询强发
+ * 请求（还没选 agent 时会直接 400）。尚未创建的 key 由 `useQuery` 的 `enabled` 变化
+ * 自然重跑 —— 那是唯一正确的时机。
+ *
+ * `cache` 是模块级 Map（切分区不丢数据），本函数只原地改条目，不重建它。
+ *
+ * @param {string} prefix key 前缀（如 `'settings'`）；空串 = 什么都不做（要全刷请用 `refreshAll()`）
+ */
+export function invalidatePrefix(prefix) {
+  var head = String(prefix || '')
+  if (!head) return
+  Array.from(cache.keys()).forEach(function (key) {
+    if (key.indexOf(head) !== 0) return
+    var entry = cache.get(key)
+    if (!entry) return
+    entry.at = 0
+    ensure(key, entry.fetcher, entry.options)
+  })
+}
+
+/**
  * 读缓存快照（非 React 上下文用；也方便探针断言）。
  * @param {string} key
  */

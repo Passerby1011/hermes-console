@@ -29,7 +29,7 @@
 import { jsx, jsxs } from 'react/jsx-runtime'
 import { useEffect, useState } from 'react'
 
-import { refreshAll, useQuery } from './lib/query.js'
+import { invalidatePrefix, refreshAll, useQuery } from './lib/query.js'
 import { useScope } from './lib/scope.js'
 import { get } from './lib/rest.js'
 import { readPref, writePref } from './lib/storage.js'
@@ -403,8 +403,27 @@ export function ConsoleApp() {
     },
     [flash]
   )
+  /**
+   * 顶部「刷新」= 重读**当前这位用户看得到的全部数据**，而不是只刷「缓存里恰好有的 key」。
+   *
+   * 为什么不是「只对当前分区调它自己的 reload」：分区组件由 `active.Component` 渲染，
+   * 外壳手里没有它的 reload 句柄；为了这一个按钮去给 11 个分区各加一份命令式接口
+   * （还要自己管理 ref 生命周期），改动面远大于收益，且新分区漏接时又会静默失效 ——
+   * 这正是 F-01 的老问题。按 key 前缀失效则与「分区怎么实现」解耦：只要分区用
+   * `useQuery('settings…')` 这类约定前缀，刷新就自然覆盖到。
+   *
+   * 两件事都要做，缺一不可：
+   *   ① `refreshAll()`：保留原行为 —— 已经渲染过、缓存里有条目的查询全部重取（含外壳的
+   *      `modules:` / `agents` 与所有分区已加载的数据）；
+   *   ② `invalidatePrefix('settings')`：设置页的查询是**按选中 agent 惰性建 key** 的
+   *      （`settings-plugins|<agent>` 等），`refreshAll` 只遍历缓存里已有的 key，
+   *      所以未加载的 key 永远刷不到。`invalidatePrefix` 只重置**已存在**的条目，
+   *      不会对 `enabled:false` 的查询强发请求（没选 agent 时不会 400）；还没建的 key
+   *      仍由 `useQuery` 的 `enabled` 变化自然重跑。
+   */
   function refresh() {
     refreshAll()
+    invalidatePrefix('settings')
     flashState[1](true)
   }
 
@@ -539,7 +558,7 @@ export function ConsoleApp() {
                   jsx('button', {
                     type: 'button',
                     className: 'hc-btn' + (flash ? ' hc-btn--done' : ''),
-                    title: '重新读取已打开分区的数据（保留当前内容，不闪屏）',
+                    title: '重新读取已打开分区的数据（含设置页已加载的插件清单 / 配置；保留当前内容，不闪屏）',
                     onClick: refresh,
                     children: flash ? '已刷新' : '刷新'
                   }),

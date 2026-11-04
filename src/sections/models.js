@@ -2384,7 +2384,7 @@ function AgentEditor(props) {
             ]
           }, 'head'),
           jsx('div', {
-            className: 'hc-rows hc-models__pv-list',
+            className: 'hc-rows hc-rows--stack hc-models__pv-list',
             children: plan.rows.map(function (row) {
               return jsxs('div', {
                 className: 'hc-row',
@@ -2514,7 +2514,9 @@ function AgentEditor(props) {
         children: [
           jsx('div', { className: 'hc-block__head', children: jsx('div', { className: 'hc-block__title', children: '写入结果（逐 agent 回读）' }, 't') }, 'head'),
           jsx('div', {
-            className: 'hc-rows',
+            // 「每一行是一整块内容」（标题行 + 说明行），不是表格的一行 ⇒ 走堆叠容器，
+            // 不能吃 `.hc-rows .hc-row` 的 4 列网格（F-04）。
+            className: 'hc-rows hc-rows--stack',
             children: result.rows.map(function (row) {
               var okCount = row.verify.filter(function (item) {
                 return item && item.ok === true
@@ -3695,7 +3697,8 @@ function HistoryPanel(props) {
             }, 't')
           }, 'head'),
           jsx('div', {
-            className: 'hc-rows',
+            // 同上：回滚结果是「一个 agent 一整块」，用堆叠容器（F-04）。
+            className: 'hc-rows hc-rows--stack',
             children: result.rows.map(function (row) {
               var ok = row.ok === true
               return jsxs('div', {
@@ -3743,7 +3746,8 @@ function HistoryPanel(props) {
             ? jsx('div', { className: 'hc-muted', style: { overflowWrap: 'anywhere' }, children: '账本没读到：' + props.batchesError }, 'err')
             : batches.length
               ? jsx('div', {
-                  className: 'hc-rows',
+                  // 批次账本的每一行同样是「一整块」（批次头 + 展开的确认/回滚区），走堆叠容器。
+                  className: 'hc-rows hc-rows--stack',
                   children: batches.map(function (item) {
                     var id = String(item.batch_id || '')
                     var asking = askBatchState[0] === id

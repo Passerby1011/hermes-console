@@ -560,7 +560,8 @@ function FieldRow(props) {
       idPrefix: 'autotitler',
       disabled: disabled,
       advancedNote: '标题模型允许留空（= 走 Hermes 的 title_generation 路由）。'
-        + '清单外的名字会先经 GET /models/validate 复核，再由后端记为未校验。',
+        + '清单外的名字在点「用这个名字」时会先经 GET /models/validate 只读复核，'
+        + '校验没过会把原因显示在选择器下方、不放行；通过后再由后端记为未校验。',
       onChange: function (next) {
         onEdit('provider', next.provider)
         onEdit('title_model', next.model)

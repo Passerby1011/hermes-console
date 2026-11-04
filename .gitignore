@@ -2,8 +2,12 @@
 #    src/main.js ──esbuild──▶ dashboard/dist/index.js ──逐字节镜像──▶ desktop/plugin.js
 #    复现：node plugins/hermes-console/scripts/build.mjs（esbuild 输出无时间戳，同输入同字节）
 #    验收纪律：产物身份 = 「源码 commit + 一次确定性构建」，不再用写死的哈希当基线。
-dashboard/dist/
-desktop/plugin.js
+#
+#    ⚠️ 2026-11-04 起**产物入库**（原先忽略）：
+#    manifest.json 的 entry 指向 dist/index.js，产物不入库 ⇒ 新克隆的仓库装上去面板白屏。
+#    为了「clone 即可安装」，产物必须跟着源码走。改完 src/ 后务必重跑 build.mjs 并一并提交，
+#    否则仓库里的产物会落后于源码 —— 这正是「面板和后端对不上」的老病根。
+#    （desktop/plugin.js 与 dist/index.js 是同字节镜像，同样入库。）
 
 # ── 运行时数据与本地状态（不是源码）
 data/

@@ -51,7 +51,7 @@ DOMAIN_MODULES = ("api_overview", "api_weather", "api_upgrade", "api_agents", "a
                   "api_autogroup", "api_autogroup_panel",
                   "api_autogroup_projects",
                   "api_advisor", "api_console_settings", "api_autotitler", "api_vcc", "api_remote",
-                  "api_models")
+                  "api_models", "api_lanes")
 
 
 def _import_domain(modname: str) -> ModuleType:

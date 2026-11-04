@@ -45,6 +45,7 @@ import { VccSection } from './sections/vcc.js'
 import { RemoteSection } from './sections/remote.js'
 import { ModelsSection } from './sections/models.js'
 import { AutotitlerSection } from './sections/autotitler.js'
+import { LanesSection } from './sections/lanes.js'
 
 /**
  * 降级清单：`/modules` 拉不到 / 结构不对 / 超时时的全量导航。**不许删** ——
@@ -52,7 +53,7 @@ import { AutotitlerSection } from './sections/autotitler.js'
  *
  * 顺序 = nav_order，且**必须与 `dashboard/modules/<id>/manifest.json` 里的 nav_order 逐一相同**
  * （overview 10 / weather 20 / models 25 / agents 30 / autogroup 40 / autotitler 45 /
- * advisor 50 / upgrade 60 / settings 70 / vcc 80 / remote 90）。首帧渲染的是这份清单，
+ * advisor 50 / lanes 55 / upgrade 60 / settings 70 / vcc 80 / remote 90）。首帧渲染的是这份清单，
  * `/modules` 落地后渲染的是后端按同一组 nav_order 排出来的清单 —— 两侧顺序一致，
  * 导航才不会有「先按 A 顺序画、800~2000ms 后换成 B 顺序」的重排（实测因此点错分区）。
  * 改这里之前先看一眼各 manifest 的 nav_order；`navOrder` 字段在这里是**唯一排序依据**。
@@ -72,6 +73,8 @@ var FALLBACK_SECTIONS = [
   { id: 'autotitler', label: '自动命名', icon: 'autotitler', hint: '参数 / 失败率 / 重试队列', navOrder: 45 },
   // Advisor 审核台：台账按 profile 隔离，与顶部作用域选择器无关。
   { id: 'advisor', label: 'Advisor', icon: 'advisor', hint: '建议 / 决定 / 策略', ignoresScope: true, navOrder: 50 },
+  // 执行 Lane：两条外部执行 lane 的心跳。**只读**（没有任何启停按钮：误点会杀 supervisor）。
+  { id: 'lanes', label: '执行 Lane', icon: 'vcc', hint: '在线 / 心跳 / 当前卡', ignoresScope: true, navOrder: 55 },
   { id: 'upgrade', label: '升级', icon: 'upgrade', hint: '扫描 / 就绪 / 暂停恢复', navOrder: 60 },
   // 设置：按 agent 的插件三态开关 + 每个插件的配置（来源层 / 脱敏只读 / 乐观锁）。
   // 后端 catalog 字段（ref / module_ref / version…）有就用、缺就降级，见 src/sections/settings.js。
@@ -102,7 +105,8 @@ var COMPONENTS = {
   vcc: VccSection,
   remote: RemoteSection,
   models: ModelsSection,
-  autotitler: AutotitlerSection
+  autotitler: AutotitlerSection,
+  lanes: LanesSection
 }
 
 /** 视觉元数据（label / icon / hint / ignoresScope）按分区 id 索引；后端 manifest 里没有这些字段。 */

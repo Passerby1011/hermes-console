@@ -80,9 +80,18 @@ def hermes_home(home: Optional[Path] = None) -> Path:
     except Exception:  # noqa: BLE001 - 没有 hermes_cli 时退回布局探测
         logger.debug("hermes-console.core.scope: get_default_hermes_root() 不可用，退回布局探测")
     try:
-        # dashboard/core/scope.py → parents[3] == <home>
+        # dashboard/core/scope.py → parents[3] == <home>（生产布局）
         candidates.append(Path(__file__).resolve().parents[3])
     except (IndexError, OSError):
+        pass
+    try:
+        # worktree / 自定义检出位置：按目录名探测，不依赖固定层数
+        from _layout import hermes_root
+
+        detected = hermes_root(Path(__file__).resolve().parent)
+        if detected is not None:
+            candidates.append(detected)
+    except Exception:  # noqa: BLE001 - 布局探测失败退回其它候选
         pass
     try:
         candidates.append(Path.home() / ".hermes")

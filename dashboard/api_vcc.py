@@ -272,7 +272,9 @@ def _engine_meta() -> Dict[str, Any]:
     """
     candidates: List[Path] = []
     try:
-        candidates.append(_DASHBOARD_DIR.parents[1] / ENGINE_PLUGIN_DIRNAME)
+        from _layout import plugins_dir
+
+        candidates.append(plugins_dir(_DASHBOARD_DIR) / ENGINE_PLUGIN_DIRNAME)
     except (IndexError, OSError):
         pass
     try:

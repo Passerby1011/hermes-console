@@ -99,6 +99,12 @@ def _seed_mode_b(sb):
     return alpha, beta, zeta
 
 
+_PLAN_API_REMOVED = (
+    "t_ac537221：/autogroup/plan、/autogroup/apply_plan、/autogroup/ops 已下线；"
+    "A/B 两条计划流水线并入 /autogroup/scan + /autogroup/apply。本用例保留作历史契约参考。"
+)
+
+@unittest.skip(_PLAN_API_REMOVED)
 class ModeAContractTest(unittest.TestCase):
     def test_candidates_exclude_grouped_and_kanban(self):
         with ProjectSandbox() as sb:
@@ -304,6 +310,7 @@ class ModeAContractTest(unittest.TestCase):
             self.assertEqual(again["error"]["code"], "already_undone")
 
 
+@unittest.skip(_PLAN_API_REMOVED)
 class ModeBContractTest(unittest.TestCase):
     def test_candidates_include_grouped_and_diff_present(self):
         with ProjectSandbox() as sb:
@@ -376,6 +383,7 @@ class ModeBContractTest(unittest.TestCase):
             self.assertEqual(sb.cwd_of("s3"), str(sb.home / "work" / "gamma"))
 
 
+@unittest.skip(_PLAN_API_REMOVED)
 class KanbanHardConstraintTest(unittest.TestCase):
     def test_kanban_never_in_plan_items(self):
         with ProjectSandbox() as sb:
@@ -390,6 +398,7 @@ class KanbanHardConstraintTest(unittest.TestCase):
 
 
 class LedgerAndLegacyTest(unittest.TestCase):
+    @unittest.skip(_PLAN_API_REMOVED)
     def test_ops_listing(self):
         with ProjectSandbox() as sb:
             _seed_mode_a(sb)
@@ -445,6 +454,7 @@ class WalSnapshotTest(unittest.TestCase):
             conn.execute("DELETE FROM projects WHERE slug = ?", (slug,))
         return conn
 
+    @unittest.skip(_PLAN_API_REMOVED)
     def test_undo_does_not_revive_project_deleted_in_wal(self):
         with ProjectSandbox() as sb:
             alpha = sb.add_project("alpha", "Alpha")
@@ -507,6 +517,7 @@ class WalSnapshotTest(unittest.TestCase):
             finally:
                 writer.close()
 
+    @unittest.skip(_PLAN_API_REMOVED)
     def test_backup_fallback_apply_and_undo_end_to_end(self):
         """checkpoint 被挡住时整条链仍然正确：快照降级成 backup，撤销按内容还原。"""
         with ProjectSandbox() as sb:
@@ -547,6 +558,7 @@ class WalSnapshotTest(unittest.TestCase):
                              "降级路径也不许复活已删项目")
             self.assertIsNone(sb.assignment("s2"))
 
+    @unittest.skip(_PLAN_API_REMOVED)
     def test_unstable_snapshot_refuses_to_apply(self):
         """快照与 live 的字节对不上（取快照期间被并发写）⇒ 409 零写入，不拿陈旧快照当回滚基准。"""
         with ProjectSandbox() as sb:

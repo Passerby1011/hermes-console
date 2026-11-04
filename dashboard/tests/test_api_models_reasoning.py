@@ -29,8 +29,18 @@ from fastapi.testclient import TestClient
 
 DASHBOARD_DIR = Path(__file__).resolve().parents[1]
 PLUGIN_ROOT = DASHBOARD_DIR.parent
+
+
+def _find_up(start: Path, name: str) -> Path:
+    for base in (start, *start.parents):
+        candidate = base / name
+        if candidate.exists():
+            return candidate
+    return start.parents[1] / name
+
+
 #: 宿主源根（``hermes_cli`` / ``hermes_constants`` / ``hermes_yaml`` 都在这儿）。
-HERMES_AGENT_DIR = PLUGIN_ROOT.parents[1] / "hermes-agent"
+HERMES_AGENT_DIR = _find_up(PLUGIN_ROOT, "hermes-agent")
 
 if str(DASHBOARD_DIR) not in sys.path:
     sys.path.insert(0, str(DASHBOARD_DIR))

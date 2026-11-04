@@ -376,7 +376,9 @@ class EndToEndTest(SandboxCase):
         self.assertTrue(payload["usage"]["real"])
         self.assertEqual(payload["model"]["calls"], len(payload["items"]))
         self.assertEqual(payload["model"]["model"], "fake-model")
-        self.assertEqual(payload["model"]["task"], "title_generation")
+        self.assertIsNone(
+            payload["model"]["task"],
+            "t_ac537221：项目分组 AI 不借 auxiliary.title_generation 槽位，task 必须是 None")
 
     def test_payload_is_serializable(self):
         payload = self.run_preview(self._mixed_caller())
@@ -426,7 +428,9 @@ class FailurePathTest(SandboxCase):
             self.assertIn(project["name"], blob)
         self.assertIn("优先", blob)
         self.assertIn("已有项目", blob)
-        self.assertEqual(caller.calls[0]["task"], "title_generation")
+        self.assertIsNone(
+            caller.calls[0]["task"],
+            "t_ac537221：调用方必须传 task=None，宿主才不会读 auxiliary.<task> 的配置")
 
     def test_session_brief_truncates(self):
         brief = ai.session_brief(self.home, "s1")

@@ -29,16 +29,32 @@ import shutil
 import sqlite3
 import sys
 import unittest
+
+import pytest
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from ai_sandbox import Sandbox, body, status_of  # noqa: E402
+_REMOVED_REASON = (
+    "t_ac537221 已把 AI 预览/落库流水线并入 /autogroup/scan + /autogroup/apply；"
+    "api_autogroup_ai_apply / api_autogroup_ai_undo / api_autogroup_ai_run / "
+    "autogroup_ai_contract 等模块已删除。本文件保留作历史契约参考，不再对当前代码执行。"
+)
+_REMOVED_MODULES = {
+    "api_autogroup_ai_apply", "api_autogroup_ai_undo", "api_autogroup_ai_run",
+    "autogroup_ai_contract", "autogroup_ai_projects", "autogroup_ai_store",
+}
+try:
+    from ai_sandbox import Sandbox, body, status_of  # noqa: E402
 
-import api_autogroup_ai_apply as apply_mod  # noqa: E402
-import api_autogroup_ai_undo as undo_mod  # noqa: E402
-import autogroup_ai_contract as contract  # noqa: E402
-import autogroup_ai as ai_engine  # noqa: E402
+    import api_autogroup_ai_apply as apply_mod  # noqa: E402
+    import api_autogroup_ai_undo as undo_mod  # noqa: E402
+    import autogroup_ai_contract as contract  # noqa: E402
+    import autogroup_ai as ai_engine  # noqa: E402
+except ModuleNotFoundError as _exc:
+    if _exc.name not in _REMOVED_MODULES:
+        raise
+    pytestmark = pytest.mark.skip(_REMOVED_REASON)
 
 SYNTH_IDS = tuple("synth-%02d" % index for index in range(1, 11))
 

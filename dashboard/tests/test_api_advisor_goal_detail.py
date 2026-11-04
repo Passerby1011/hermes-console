@@ -2,11 +2,36 @@
 """详情端点也必须带 goal_source（详情走 _find_advice → 带 events 的 item，路径不同）。"""
 
 import json
+import os
+import sys
+from pathlib import Path
 
+import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-import api_advisor
+DASHBOARD_DIR = Path(__file__).resolve().parents[1]
+if str(DASHBOARD_DIR) not in sys.path:
+    sys.path.insert(0, str(DASHBOARD_DIR))
+
+import api_advisor  # noqa: E402
+
+#: 真读 ``plugins/advisor/audit.py``：受限环境不可读时跳过，不把 ACL 问题报成代码回归。
+_ADVISOR_AUDIT = Path(api_advisor.advisor_dir()) / "audit.py"
+
+
+def _audit_readable(path: Path) -> bool:
+    #: Windows ACL 会让 ``Path.is_file()`` / ``os.stat`` 直接抛 ``PermissionError``，
+    #: 这里吞掉异常，把「环境不可读」当成 skip 条件而不是收集错误。
+    try:
+        return os.path.isfile(str(path)) and os.access(str(path), os.R_OK)
+    except OSError:
+        return False
+
+
+if not _audit_readable(_ADVISOR_AUDIT):
+    pytest.skip("advisor 台账插件不可读（环境限制）：" + str(_ADVISOR_AUDIT),
+                allow_module_level=True)
 
 PREFIX = "/api/plugins/hermes-console"
 

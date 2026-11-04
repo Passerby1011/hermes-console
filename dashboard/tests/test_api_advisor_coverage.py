@@ -12,6 +12,7 @@
 """
 
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -24,6 +25,24 @@ if str(DASHBOARD_DIR) not in sys.path:
     sys.path.insert(0, str(DASHBOARD_DIR))
 
 import api_advisor  # noqa: E402
+
+#: 这些用例真读 ``plugins/advisor/audit.py``（生产侧台账模块）。沙盒/受限环境里该目录
+#: 可能不可读（Windows ACL），此时跳过并写明原因，而不是把环境问题报成代码回归。
+_ADVISOR_AUDIT = Path(api_advisor.advisor_dir()) / "audit.py"
+
+
+def _audit_readable(path: Path) -> bool:
+    #: Windows ACL 会让 ``Path.is_file()`` / ``os.stat`` 直接抛 ``PermissionError``，
+    #: 这里吞掉异常，把「环境不可读」当成 skip 条件而不是收集错误。
+    try:
+        return os.path.isfile(str(path)) and os.access(str(path), os.R_OK)
+    except OSError:
+        return False
+
+
+if not _audit_readable(_ADVISOR_AUDIT):
+    pytest.skip("advisor 台账插件不可读（环境限制）：" + str(_ADVISOR_AUDIT),
+                allow_module_level=True)
 
 PREFIX = "/api/plugins/hermes-console"
 

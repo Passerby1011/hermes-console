@@ -31,11 +31,33 @@ from fastapi.testclient import TestClient
 
 DASHBOARD_DIR = Path(__file__).resolve().parents[1]
 PLUGIN_ROOT = DASHBOARD_DIR.parent
-REAL_PLUGIN = PLUGIN_ROOT.parent / "hermes-auto-titler"
+
+
+def _find_up(start: Path, name: str) -> Path:
+    """按目录名向上找（生产 ``plugins/x`` 与 worktree 都成立，不看固定层数）。"""
+    for base in (start, *start.parents):
+        candidate = base / name
+        if candidate.exists():
+            return candidate
+    return start.parents[1] / name
+
+
+REAL_PLUGIN = _find_up(PLUGIN_ROOT, "hermes-auto-titler")
+#: 这些用例会复制真实插件清单来造沙盒；插件目录不可读时跳过（环境限制，不是代码回归）。
+def _readable(path: Path) -> bool:
+    try:
+        return os.path.isfile(str(path)) and os.access(str(path), os.R_OK)
+    except OSError:
+        return False
+
+
+if not _readable(REAL_PLUGIN / "plugin.yaml"):
+    pytest.skip("hermes-auto-titler 插件不可读（环境限制）：" + str(REAL_PLUGIN),
+                allow_module_level=True)
 #: 宿主源根（``hermes_cli`` / ``hermes_yaml`` / ``hermes_constants`` 都在这儿）。
 #: 不插它，``save_plugin_setting_for`` → ``hermes_cli.plugins_state`` 会
 #: ``ModuleNotFoundError: No module named 'hermes_yaml'``（实测）。所以写路径的用例必须先补上。
-HERMES_AGENT_DIR = PLUGIN_ROOT.parents[1] / "hermes-agent"
+HERMES_AGENT_DIR = _find_up(PLUGIN_ROOT, "hermes-agent")
 
 if str(DASHBOARD_DIR) not in sys.path:
     sys.path.insert(0, str(DASHBOARD_DIR))

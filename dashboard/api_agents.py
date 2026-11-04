@@ -68,6 +68,15 @@ def hermes_home() -> Path:
         candidates.append(Path(__file__).resolve().parents[3])
     except (IndexError, OSError):
         pass
+    try:
+        # worktree / 自定义检出位置：按目录名找同时含 plugins/ 与 hermes-agent/ 的祖先
+        from _layout import hermes_root
+
+        detected = hermes_root(Path(__file__).resolve().parent)
+        if detected is not None:
+            candidates.append(detected)
+    except Exception:  # noqa: BLE001 - 布局探测失败不能影响路由
+        pass
     env_home = (os.environ.get("HERMES_HOME") or "").strip()
     if env_home:
         candidates.append(Path(env_home))

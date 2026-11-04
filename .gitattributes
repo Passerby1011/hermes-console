@@ -1,0 +1,12 @@
+# 构建产物必须是字节稳定的。
+#
+# 为什么需要这个文件：本机 core.autocrlf=true，git 在 checkout 时会把 LF 转成 CRLF，
+# 于是 clone 下来的 dashboard/dist/index.js 是 1223362 字节，而 scripts/build.mjs
+# 本地构建产物是 1199847 字节 —— 同一份源码，两种字节，破坏「产物身份 = 源码 commit
+# + 一次确定性构建」这条验收纪律，也让「两处产物同字节」的检查在不同平台得出不同结论。
+#
+# 实测：2026-11-04 全新 clone 后 dist/index.js 被转成 CRLF（23515 处），与本地构建不一致。
+# 下列路径标记为 -text（不做任何行尾转换），保证 blob == 工作区 == 构建输出。
+
+dashboard/dist/**        -text
+desktop/plugin.js        -text
